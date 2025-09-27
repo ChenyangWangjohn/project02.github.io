@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CS 180 Project 2</title>
+  <meta name="description" content="CS 180 Project 2: Fun with Filters and Frequencies!">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>CS 180 Project 2</h1>
+      <p class="subtitle">CS 180: Computer Vision • Fall 2025</p>
+      <p class="project-title">Fun with Filters and Frequencies!</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="overview">
+      <h2>Overview</h2>
+      <div class="content">
+        <p>
+          In this project I explored spatial filtering and frequency-domain thinking to build classical
+          image processing effects from scratch. In Part 1, I implemented convolution, finite difference
+          filters, and smoothed derivatives (DoG) to detect edges more robustly. In Part 2, I created
+          frequency-based effects including sharpening, hybrid images, Gaussian/Laplacian stacks, and
+          multi-resolution blending (the classic oraple!).
+        </p>
+      </div>
+    </section>
+
+    <section id="part-1">
+      <h2>Part 1: Fun with Filters</h2>
+      <p class="section-intro">
+        Building intuition with 2D convolution, finite differences, and smoothed derivatives (DoG).
+      </p>
+
+      <h3 id="part-1-1">1.1 Convolutions from Scratch</h3>
+      <div class="content">
+        <p>Implemented 2D convolution with zero-padding using nested loops and verified against <code>scipy.signal.convolve2d</code>.</p>
+      </div>
+      <div class="image-grid">
+        <div class="image-item">
+          <figure>
+            <img src="pictures/1.1code.png" alt="Convolution code snippet">
+            <figcaption><strong>Code Snippet</strong> Manual 2D convolution implementation.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/1-1blur.png" alt="9x9 box blur result">
+            <figcaption><strong>9x9 Box Blur</strong> Smoothed portrait using a box filter.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/1-1dx.png" alt="Dx response">
+            <figcaption><strong>Finite Difference Dx</strong> Horizontal edges emphasized.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/1-1dy.png" alt="Dy response">
+            <figcaption><strong>Finite Difference Dy</strong> Vertical edges emphasized.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <h3 id="part-1-2">1.2 Finite Difference Operator</h3>
+      <div class="content">
+        <p>Computed partial derivatives, gradient magnitude, and a thresholded edge map on 1.2 test images.</p>
+      </div>
+      <div class="image-grid">
+        
+        <div class="image-item">
+          <figure>
+            <img src="pictures/1.2-gradientmag.png" alt="Gradient magnitude alt">
+            <figcaption><strong>Alternate GM</strong> Additional gradient magnitude result.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/1.2%20edges.png" alt="Edges alt">
+            <figcaption><strong>Alternate Edge Map</strong> Another threshold setting.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <h3 id="part-1-3">1.3 Derivative of Gaussian (DoG)</h3>
+      <div class="content">
+        <p>Applied Gaussian smoothing before differencing and built DoG filters to combine smoothing and differentiation in a single convolution.</p>
+      </div>
+      <div class="image-grid">
+        <div class="image-item">
+          <figure>
+            <img src="pictures/1.3after gaussian mag.png" alt="Gradient magnitude after Gaussian smoothing">
+            <figcaption><strong>GM after Gaussian</strong> Less noise and cleaner edges.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/1.3edges after gaussian.png" alt="Edges after Gaussian smoothing">
+            <figcaption><strong>Edges after Gaussian</strong> Thresholded, smoother edges.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/1.3dogx.png" alt="DoG X kernel visualization">
+            <figcaption><strong>DoG X Filter</strong> Visualization of DoG in X.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/1.3dogy.png" alt="DoG Y kernel visualization">
+            <figcaption><strong>DoG Y Filter</strong> Visualization of DoG in Y.</figcaption>
+          </figure>
+        </div>
+        </div>
+      </section>
+
+    <section id="part-2">
+      <h2>Part 2: Fun with Frequencies</h2>
+      <p class="section-intro">
+        Sharpening by boosting high frequencies, hybrid images, and multi-resolution blending using Gaussian/Laplacian stacks.
+      </p>
+
+      <h3 id="part-2-1">2.1 Image "Sharpening"</h3>
+      <div class="content">
+        <p>Used unsharp masking to add back high frequencies: <code>sharp = img + alpha * (img - blur(img))</code>.</p>
+      </div>
+      <div class="image-grid">
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2.1taji.png" alt="Sharpened Taj">
+            <figcaption><strong>Sharpened Taj</strong> Unsharp masking applied.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2.1%20mychoice.png" alt="Sharpened (my choice)">
+            <figcaption><strong>Sharpened Example</strong> Another image sharpened.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2-1%20mychoice.png" alt="Sharpened (second choice)">
+            <figcaption><strong>Sharpened Example 2</strong> Additional sharpening result.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <h3 id="part-2-2">2.2 Hybrid Images</h3>
+      <div class="content">
+        <p>Combined low frequencies of image A with high frequencies of image B to form a hybrid. Parameters noted in the figures.</p>
+      </div>
+      <div class="image-grid">
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2.2picture1.png" alt="Hybrid: low-pass A, high-pass B, and hybrid result">
+            <figcaption><strong>2.2 Hybrid Overview</strong> Overview</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2.2picture1progress.png" alt="Hybrid pipeline: A, A_low, B_on_A, B_high (vis), Hybrid">
+            <figcaption><strong>2.2 Pipeline</strong> Main pipeline</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2.2 p1 fft.png" alt="Hybrid pipeline: A, A_low, B_on_A, B_high (vis), Hybrid">
+            <figcaption><strong>2.2 fft</strong> FFT to show</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2.2picture2.png" alt="Hybrid pipeline: A, A_low, B_on_A, B_high (vis), Hybrid">
+            <figcaption><strong>2.2 Picture2</strong> Picture 2 to show.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2.2 fail.png" alt="Hybrid pipeline: A, A_low, B_on_A, B_high (vis), Hybrid">
+            <figcaption><strong>2.2 Fail cases</strong> Picture that fails.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <h3 id="part-2-3">2.3 Gaussian and Laplacian Stacks</h3>
+      <div class="content">
+        <p>Constructed Gaussian/Laplacian stacks (no downsampling) to analyze band-limited structure for blending.</p>
+      </div>
+      <div class="image-grid">
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2.3.png" alt="Stack visualization">
+            <figcaption><strong>Stack Visualization</strong> Gaussian/Laplacian levels.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <h3 id="part-2-4">2.4 Multiresolution Blending (Oraple)</h3>
+      <div class="content">
+        <p>Blended images using Laplacian stacks with Gaussian-smoothed masks to achieve seamless transitions.</p>
+      </div>
+      <div class="image-grid">
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2-4_oraple.png" alt="Oraple result">
+            <figcaption><strong>Oraple</strong> Classic apple/orange blend.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2.4result1.png" alt="Blend result">
+            <figcaption><strong>Blend Result 1</strong> Multiresolution blending.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2.42.png" alt="Blend result 2">
+            <figcaption><strong>Blend Result 2</strong> Alternate mask/parameters.</figcaption>
+          </figure>
+        </div>
+        <div class="image-item">
+          <figure>
+            <img src="pictures/2-4_galaxy_flowers.png" alt="Creative blend: galaxy + flowers">
+            <figcaption><strong>Creative Blend</strong> Galaxy × Flowers.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="challenges">
+      <h2>Challenges & Reflections</h2>
+      <div class="content">
+        <p>
+          Choosing thresholds and parameters (Gaussian sigmas, mask blur, and hybrid cutoffs) had the biggest impact on result quality.
+          I iterated on these while inspecting gradient magnitudes and FFTs to guide adjustments. Alignment and mask design were
+          also critical for convincing hybrid images and blends.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>CS 180 Project 2 • Fall 2025 • UC Berkeley</p>
+    </div>
+  </footer>
+</body>
+</html>
