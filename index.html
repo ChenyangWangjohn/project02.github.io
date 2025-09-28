@@ -38,82 +38,82 @@
 
       <h3 id="part-1-1">1.1 Convolutions from Scratch</h3>
       <div class="content">
-        <p>Implemented 2D convolution with zero-padding using nested loops and verified against <code>scipy.signal.convolve2d</code>.</p>
+        <p>I implemented 2D convolution from scratch using two approaches: a 4-loop version and an optimized 2-loop version. Both implementations handle zero-padding automatically by padding the input image based on kernel dimensions (<code>pad_h = kh//2, pad_w = kw//2</code>). The key insight is properly flipping the kernel during convolution - in the 4-loop version, I flip by indexing <code>K[kh-1-m, kw-1-n]</code>, while in the 2-loop version I pre-flip the entire kernel with <code>K[::-1, ::-1]</code>. Both methods were verified to produce identical results to <code>scipy.signal.convolve2d</code> with maximum difference of 0.0.</p>
       </div>
       <div class="image-grid">
         <div class="image-item">
           <figure>
             <img src="pictures/1.1code.png" alt="Convolution code snippet">
-            <figcaption><strong>Code Snippet</strong> Manual 2D convolution implementation.</figcaption>
+            <figcaption><strong>Convolution Implementation</strong> The 4-loop nested implementation explicitly iterates through image pixels (i,j) and kernel elements (m,n), accumulating the flipped kernel multiplication. This demonstrates the fundamental convolution operation: <code>out[i,j] = Σ Σ img[i+m,j+n] * kernel_flipped[m,n]</code>.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/1-1blur.png" alt="9x9 box blur result">
-            <figcaption><strong>9x9 Box Blur</strong> Smoothed portrait using a box filter.</figcaption>
+            <figcaption><strong>9x9 Box Blur</strong> Applied a 9x9 box filter (uniform weights of 1/81) to smooth the image. This averaging filter reduces noise and detail by replacing each pixel with the mean of its 9x9 neighborhood, creating a blur effect while preserving overall image structure.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/1-1dx.png" alt="Dx response">
-            <figcaption><strong>Finite Difference Dx</strong> Horizontal edges emphasized.</figcaption>
+            <figcaption><strong>Finite Difference Dx</strong> Convolved with horizontal derivative filter [1, -1] to detect vertical edges. This computes the horizontal gradient by subtracting each pixel from its right neighbor, highlighting areas where intensity changes horizontally. Visualized using absolute values for clarity.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/1-1dy.png" alt="Dy response">
-            <figcaption><strong>Finite Difference Dy</strong> Vertical edges emphasized.</figcaption>
+            <figcaption><strong>Finite Difference Dy</strong> Convolved with vertical derivative filter [[1], [-1]] to detect horizontal edges. This computes the vertical gradient by subtracting each pixel from its bottom neighbor, revealing areas where intensity changes vertically. The transpose of Dx filter.</figcaption>
           </figure>
         </div>
       </div>
 
       <h3 id="part-1-2">1.2 Finite Difference Operator</h3>
       <div class="content">
-        <p>Computed partial derivatives, gradient magnitude, and a thresholded edge map on 1.2 test images.</p>
+        <p>Applied finite difference operators to compute image gradients and detect edges. I used Dx=[1,-1] and Dy=[[1],[-1]] kernels to compute horizontal and vertical derivatives respectively. The gradient magnitude was calculated as <code>mag = sqrt(Gx² + Gy²)</code> and normalized to [0,1]. For edge detection, I thresholded the gradient magnitude at τ=0.174, chosen empirically to balance between detecting true edges and suppressing noise. This simple edge detection approach reveals the image's structural boundaries but is sensitive to noise.</p>
       </div>
       <div class="image-grid">
         
         <div class="image-item">
           <figure>
             <img src="pictures/1.2-gradientmag.png" alt="Gradient magnitude alt">
-            <figcaption><strong>Alternate GM</strong> Additional gradient magnitude result.</figcaption>
+            <figcaption><strong>Gradient Magnitude</strong> Combined horizontal and vertical gradients using L2 norm: <code>sqrt(Gx² + Gy²)</code>. Brighter regions indicate stronger edges where intensity changes rapidly. The magnitude captures edge strength regardless of direction, showing both vertical and horizontal features.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/1.2%20edges.png" alt="Edges alt">
-            <figcaption><strong>Alternate Edge Map</strong> Another threshold setting.</figcaption>
+            <figcaption><strong>Binary Edge Map</strong> Thresholded gradient magnitude at τ=0.174 to create binary edge map. This threshold was chosen to capture main structural edges while suppressing weaker gradients from noise. Notice the noisy artifacts - a limitation of simple finite differences without smoothing.</figcaption>
           </figure>
         </div>
       </div>
 
       <h3 id="part-1-3">1.3 Derivative of Gaussian (DoG)</h3>
       <div class="content">
-        <p>Applied Gaussian smoothing before differencing and built DoG filters to combine smoothing and differentiation in a single convolution.</p>
+        <p>Improved edge detection by first smoothing with a Gaussian filter before applying derivatives. I used an 11x11 Gaussian kernel with σ=1.0 to suppress noise while preserving important edges. Two approaches were compared: (1) smooth image then differentiate, and (2) create DoG filters by convolving Gaussian with derivative kernels, then apply once. Both methods are mathematically equivalent due to convolution associativity: <code>(G * I) * D = I * (G * D)</code>. The DoG approach is more efficient, requiring only one convolution operation. The resulting edges are significantly cleaner with reduced noise compared to raw finite differences, using threshold τ=0.05.</p>
       </div>
       <div class="image-grid">
         <div class="image-item">
           <figure>
             <img src="pictures/1.3after gaussian mag.png" alt="Gradient magnitude after Gaussian smoothing">
-            <figcaption><strong>GM after Gaussian</strong> Less noise and cleaner edges.</figcaption>
+            <figcaption><strong>Smoothed Gradient Magnitude</strong> After Gaussian smoothing (σ=1.0), the gradient magnitude shows much cleaner edge responses. The pre-smoothing suppresses high-frequency noise while preserving dominant edge structures, resulting in smoother, more continuous edge detections.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/1.3edges after gaussian.png" alt="Edges after Gaussian smoothing">
-            <figcaption><strong>Edges after Gaussian</strong> Thresholded, smoother edges.</figcaption>
+            <figcaption><strong>DoG Edge Detection</strong> Binary edges after Gaussian smoothing, thresholded at τ=0.05. Compare with Part 1.2 - the edges are now continuous, less noisy, and better represent true object boundaries. The lower threshold is possible because noise has been suppressed.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/1.3dogx.png" alt="DoG X kernel visualization">
-            <figcaption><strong>DoG X Filter</strong> Visualization of DoG in X.</figcaption>
+            <figcaption><strong>DoG X Filter Kernel</strong> The horizontal Derivative of Gaussian filter, created by convolving an 11x11 Gaussian (σ=1.0) with Dx=[1,-1]. This combined filter simultaneously smooths and differentiates, detecting vertical edges while suppressing noise in a single operation.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/1.3dogy.png" alt="DoG Y kernel visualization">
-            <figcaption><strong>DoG Y Filter</strong> Visualization of DoG in Y.</figcaption>
+            <figcaption><strong>DoG Y Filter Kernel</strong> The vertical Derivative of Gaussian filter, created by convolving an 11x11 Gaussian (σ=1.0) with Dy=[[1],[-1]]. This detects horizontal edges while smoothing. The characteristic shape shows positive and negative lobes separated by a smooth transition.</figcaption>
           </figure>
         </div>
         </div>
@@ -127,106 +127,106 @@
 
       <h3 id="part-2-1">2.1 Image "Sharpening"</h3>
       <div class="content">
-        <p>Used unsharp masking to add back high frequencies: <code>sharp = img + alpha * (img - blur(img))</code>.</p>
+        <p>Implemented unsharp masking to enhance image details by amplifying high-frequency components. The technique works by: (1) Creating a blurred version using an 11x11 Gaussian kernel with σ=2.0, (2) Subtracting the blur to isolate high frequencies: <code>high_freq = img - blur</code>, (3) Adding scaled high frequencies back: <code>sharp = img + α * high_freq</code>. I used α=1.5 to control sharpening strength. This is mathematically equivalent to <code>sharp = (1+α)*img - α*blur</code>, effectively boosting edges and fine details. Results are clipped to [0,1] to prevent overflow. The method successfully enhances architectural details in the Taj Mahal and recovers sharpness in naturally blurry images.</p>
       </div>
       <div class="image-grid">
         <div class="image-item">
           <figure>
             <img src="pictures/2.1taji.png" alt="Sharpened Taj">
-            <figcaption><strong>Sharpened Taj</strong> Unsharp masking applied.</figcaption>
+            <figcaption><strong>Taj Mahal Sharpened</strong> Unsharp masking with α=1.5 enhances architectural details. The minaret edges, dome outlines, and intricate patterns become more pronounced. High-frequency boost makes the structure appear crisper without introducing significant artifacts.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/2.1%20mychoice.png" alt="Sharpened (my choice)">
-            <figcaption><strong>Sharpened Example</strong> Another image sharpened.</figcaption>
+            <figcaption><strong>Portrait Enhancement</strong> Applied unsharp masking (σ=2.0, α=1.5) to sharpen a slightly blurry portrait. Facial features, hair texture, and clothing details become more defined. The process successfully recovers perceived sharpness from the original soft focus.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/2-1%20mychoice.png" alt="Sharpened (second choice)">
-            <figcaption><strong>Sharpened Example 2</strong> Additional sharpening result.</figcaption>
+            <figcaption><strong>Blur-then-Sharpen Test</strong> Demonstration of sharpening limits: artificially blurred then sharpened image compared to original. While unsharp masking recovers some detail, it cannot fully restore information lost in blurring, showing the technique enhances existing details rather than creating new ones.</figcaption>
           </figure>
         </div>
       </div>
 
       <h3 id="part-2-2">2.2 Hybrid Images</h3>
       <div class="content">
-        <p>Combined low frequencies of image A with high frequencies of image B to form a hybrid. Parameters noted in the figures.</p>
+        <p>Created hybrid images that change appearance with viewing distance by combining different frequency bands from two images. The technique: (1) Extract low frequencies from image A using Gaussian filter (σ_low controls cutoff), (2) Extract high frequencies from image B by subtracting its Gaussian-blurred version (σ_high controls cutoff), (3) Sum the components: <code>hybrid = A_low + B_high</code>. Key to success is proper alignment - I implemented stretching (sx, sy) and translation (dx, dy) to match facial features. For face hybrids, I used σ_low=1.0 and σ_high=8.5 with weights wA=1.0, wB=1.0. The result appears as image B up close (high frequencies dominate) but transforms to image A from distance (only low frequencies visible). FFT analysis confirms the frequency separation.</p>
       </div>
       <div class="image-grid">
         <div class="image-item">
           <figure>
             <img src="pictures/2.2picture1.png" alt="Hybrid: low-pass A, high-pass B, and hybrid result">
-            <figcaption><strong>2.2 Hybrid Overview</strong> Overview</figcaption>
+            <figcaption><strong>Face Hybrid Result</strong> Successfully blended two faces - viewing distance changes perception. Low frequencies (σ=1.0) from left face provide overall structure, while high frequencies (σ=8.5) from right face add fine details. Step back or squint to see the transition.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/2.2picture1progress.png" alt="Hybrid pipeline: A, A_low, B_on_A, B_high (vis), Hybrid">
-            <figcaption><strong>2.2 Pipeline</strong> Main pipeline</figcaption>
+            <figcaption><strong>Hybrid Creation Pipeline</strong> Left to right: (1) Original image A, (2) Low-pass filtered A (σ=1.0), (3) Aligned image B overlaid on A, (4) High-pass filtered B visualized, (5) Final hybrid. Alignment via scaling (2x, 2.5x) and translation (-208, -70 pixels) was crucial for convincing results.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/2.2 p1 fft.png" alt="Hybrid pipeline: A, A_low, B_on_A, B_high (vis), Hybrid">
-            <figcaption><strong>2.2 fft</strong> FFT to show</figcaption>
+            <figcaption><strong>Frequency Analysis</strong> FFT magnitude spectra (log scale) showing frequency content. Left: A_low contains only low frequencies (center bright). Middle: B_high contains only high frequencies (edges bright, center dark). Right: Hybrid combines both bands, confirming successful frequency separation.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/2.2picture2.png" alt="Hybrid pipeline: A, A_low, B_on_A, B_high (vis), Hybrid">
-            <figcaption><strong>2.2 Picture2</strong> Picture 2 to show.</figcaption>
+            <figcaption><strong>Lion-Tiger Hybrid</strong> Second example with σ_low=2.0, σ_high=7.0. Aligned with scaling (0.8x, 1.0x) and translation (150, 60). The tiger's stripes (high freq) overlay the lion's face structure (low freq). Less alignment needed due to similar animal features.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/2.2 fail.png" alt="Hybrid pipeline: A, A_low, B_on_A, B_high (vis), Hybrid">
-            <figcaption><strong>2.2 Fail cases</strong> Picture that fails.</figcaption>
+            <figcaption><strong>Failed Hybrid - Wrong Parameters</strong> Demonstration of parameter importance: reversed sigmas (σ_low=6.0 > σ_high=1.0) creates frequency overlap instead of separation. The result is a muddy double-exposure effect rather than a proper hybrid, showing both images simultaneously at all distances.</figcaption>
           </figure>
         </div>
       </div>
 
       <h3 id="part-2-3">2.3 Gaussian and Laplacian Stacks</h3>
       <div class="content">
-        <p>Constructed Gaussian/Laplacian stacks (no downsampling) to analyze band-limited structure for blending.</p>
+        <p>Built Gaussian and Laplacian stacks to decompose images into frequency bands for multi-resolution analysis. Unlike pyramids, stacks maintain full resolution at each level. The Gaussian stack is created by repeatedly applying Gaussian blur (σ=2.0 per level): <code>G[i+1] = gaussian_blur(G[i])</code>. The Laplacian stack captures band-pass frequencies by differencing adjacent Gaussian levels: <code>L[i] = G[i] - G[i+1]</code>. With 6 levels, each Laplacian layer isolates progressively lower frequency bands, from fine details (L[0]) to broader features (L[4]), with G[5] containing only the lowest frequencies. This decomposition enables frequency-based image manipulation and seamless blending by operating on individual frequency bands.</p>
       </div>
       <div class="image-grid">
         <div class="image-item">
           <figure>
             <img src="pictures/2.3.png" alt="Stack visualization">
-            <figcaption><strong>Stack Visualization</strong> Gaussian/Laplacian levels.</figcaption>
+            <figcaption><strong>Multi-resolution Decomposition</strong> Top row: Gaussian stack showing progressive blurring (σ=2.0 per level). Bottom row: Laplacian stack isolating different frequency bands. Early levels capture fine details (edges, texture), while later levels represent coarse structure. The sum of all Laplacian levels plus the final Gaussian reconstructs the original image perfectly.</figcaption>
           </figure>
         </div>
       </div>
 
       <h3 id="part-2-4">2.4 Multiresolution Blending (Oraple)</h3>
       <div class="content">
-        <p>Blended images using Laplacian stacks with Gaussian-smoothed masks to achieve seamless transitions.</p>
+        <p>Implemented Burt & Adelson's multi-resolution blending algorithm to seamlessly combine images using frequency-domain techniques. The algorithm: (1) Decompose both images into Laplacian stacks (6 levels, σ=2.0), (2) Create a Gaussian stack of the blend mask (smoothed with σ=13.0 for oraple, varying for others), (3) Blend each Laplacian level using the corresponding Gaussian mask level: <code>L_blend[i] = mask[i]*L_A[i] + (1-mask[i])*L_B[i]</code>, (4) Reconstruct from blended Laplacian stack. The key insight: blending different frequencies with appropriately smoothed masks eliminates visible seams. Coarse features blend with heavily smoothed masks while fine details use sharper transitions. This creates natural-looking composites impossible with simple alpha blending.</p>
       </div>
       <div class="image-grid">
         <div class="image-item">
           <figure>
             <img src="pictures/2-4_oraple.png" alt="Oraple result">
-            <figcaption><strong>Oraple</strong> Classic apple/orange blend.</figcaption>
+            <figcaption><strong>The Classic Oraple</strong> Seamless blend of apple and orange using vertical mask (50% split, σ=13.0 smoothing). The multi-resolution approach creates a physically impossible but visually convincing fruit. Notice no visible seam - each frequency band transitions at appropriate smoothness. Parameters: 6 levels, σ=2.0 per level.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/2.4result1.png" alt="Blend result">
-            <figcaption><strong>Blend Result 1</strong> Multiresolution blending.</figcaption>
+            <figcaption><strong>Frequency Band Contributions</strong> Visualization of how different Laplacian levels contribute to the final blend. Shows levels 0, 2, 4 with their masked contributions from each source image and the combined result. Fine details blend sharply while coarse features transition smoothly, creating the seamless effect.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/2.42.png" alt="Blend result 2">
-            <figcaption><strong>Blend Result 2</strong> Alternate mask/parameters.</figcaption>
+            <figcaption><strong>Custom Mask Blending</strong> Demonstration with non-linear mask shape and different smoothing parameters. The algorithm adapts to arbitrary mask geometries, maintaining seamless transitions regardless of boundary complexity. Adjust mask blur (σ) to control transition sharpness.</figcaption>
           </figure>
         </div>
         <div class="image-item">
           <figure>
             <img src="pictures/2-4_galaxy_flowers.png" alt="Creative blend: galaxy + flowers">
-            <figcaption><strong>Creative Blend</strong> Galaxy × Flowers.</figcaption>
+            <figcaption><strong>Galaxy-Flowers Artistic Blend</strong> Creative application blending cosmic and natural imagery. Horizontal mask (45% split) with σ=25.0 creates dreamlike transition. Used 7 levels with σ=2.0 to capture both fine flower details and smooth galaxy gradients. The result merges two incompatible realities into a surreal but cohesive image.</figcaption>
           </figure>
         </div>
       </div>
@@ -236,9 +236,16 @@
       <h2>Challenges & Reflections</h2>
       <div class="content">
         <p>
-          Choosing thresholds and parameters (Gaussian sigmas, mask blur, and hybrid cutoffs) had the biggest impact on result quality.
-          I iterated on these while inspecting gradient magnitudes and FFTs to guide adjustments. Alignment and mask design were
-          also critical for convincing hybrid images and blends.
+          <strong>Parameter Tuning:</strong> The most challenging aspect was finding optimal parameters for each technique. For edge detection, threshold τ required balancing sensitivity vs noise - too low captured noise, too high missed important edges. The DoG improvement came from understanding that Gaussian smoothing before differentiation is mathematically equivalent to convolving with DoG kernels, enabling single-pass edge detection.
+        </p>
+        <p>
+          <strong>Frequency Domain Insights:</strong> Hybrid images taught me how human perception processes different frequencies at varying distances. Critical parameters were σ_low (controls which face dominates at distance) and σ_high (controls near-view clarity). Failed attempts with σ_low > σ_high showed that proper frequency separation is essential - overlapping bands create muddy double-exposures rather than perceptual transitions.
+        </p>
+        <p>
+          <strong>Multi-resolution Blending:</strong> The key insight was that different frequency bands require different mask smoothing. Fine details need sharp transitions while coarse features need smooth ones. The Laplacian stack decomposition elegantly solves this by applying progressively smoother masks to lower frequencies. Reconstruction is surprisingly robust - the mathematics guarantee perfect image recovery from the stack.
+        </p>
+        <p>
+          <strong>Technical Learnings:</strong> Implementing convolution from scratch revealed the importance of kernel flipping and boundary handling. The progression from 4-loop to 2-loop to FFT-based convolution showed the computational benefits of algorithmic optimization. Working with both spatial and frequency domains reinforced their duality - some operations are natural in one domain but complex in the other.
         </p>
       </div>
     </section>
